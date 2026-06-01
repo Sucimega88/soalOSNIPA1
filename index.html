@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game OSN IPA SD - AI Evaluator</title>
+    <style>
+        :root {
+            --primary-color: #4A90E2;
+            --secondary-color: #2ECC71;
+            --danger-color: #E74C3C;
+            --dark-color: #2C3E50;
+            --light-color: #F8F9FA;
+            --warning-color: #F1C40F;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* Menggunakan gambar background yang diberikan oleh user */
+            background-image: url('https://i.imgur.com/eIJDKpl.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Memberikan efek kaca transparan (glassmorphism) agar serasi dengan background */
+        .game-container {
+            background-color: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(5px);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            width: 100%;
+            max-width: 700px;
+            padding: 30px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        /* Menu Mulai (Start Screen) */
+        .start-screen {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .start-logo {
+            font-size: 4.5rem;
+            margin: 10px 0 0px 0;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .start-screen h1 {
+            color: var(--dark-color);
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 850;
+            line-height: 1.2;
+        }
+
+        .start-screen h1 span {
+            color: var(--primary-color);
+            font-size: 1.3rem;
+            display: block;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+        .info-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .info-card {
+            background: #f0f4f8;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #e1e8ed;
+        }
+
+        .info-card .value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            display: block;
+        }
+
+        .info-card .label {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            font-weight: 600;
+        }
+
+        .start-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+            transition: all 0.2s ease;
+            width: 100%;
+            max-width: 320px;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(46, 204, 113, 0.5);
+            background-color: #27ae60;
+        }
+
+        .start-btn:active {
+            transform: translateY(-1px);
+        }
+
+        /* Quiz Screen (Hidden by default) */
+        #quiz-screen {
+            display: none;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--light-color);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .score-board {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--dark-color);
+        }
+
+        .voice-setting {
+            margin-top: 5px;
+            background: #f0f4f8;
+            padding: 12px 20px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            font-size: 0.95rem;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #e1e8ed;
+        }
+
+        .voice-setting input[type="radio"] {
+            margin-right: 5px;
+            cursor: pointer;
+        }
+
+        .voice-setting label {
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        .progress-bar {
+            background-color: #e0e0e0;
+            height: 10px;
+            border-radius: 5px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .progress {
+            background-color: var(--primary-color);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .question-box {
+            font-size: 1.2rem;
+            color: var(--dark-color);
+            margin-bottom: 25px;
+            line-height: 1.6;
+            font-weight: 600;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background-color: var(--light-color);
+            border: 2px solid #dcdde1;
+            border-radius: 8px;
+            padding: 15px 20px;
+            font-size: 1rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--dark-color);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .option-btn:hover {
+            background-color: #e1b12c;
+            color: white;
+            border-color: #e1b12c;
+        }
+
+        .option-btn.correct {
+            background-color: var(--secondary-color) !important;
+            color: white;
+            border-color: var(--secondary-color);
+        }
+
+        .option-btn.wrong {
+            background-color: var(--danger-color) !important;
+            color: white;
+            border-color: var(--danger-color);
+        }
+
+        .feedback-box {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+            line-height: 1.5;
+        }
+
+        .feedback-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .feedback-fail {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .next-btn {
+            margin-top: 20px;
+            background-color: var(--dark-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none;
+            float: right;
+        }
+
+        .next-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Result Screen */
+        .result-screen {
+            text-align: center;
+            display: none;
+        }
+
+        .result-screen h2 {
+            color: var(--dark-color);
+            font-size: 2rem;
+        }
+
+        .score-display {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 20px 0;
+        }
+
+        .restart-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        /* Responsive Design */
+        @media(max-width: 600px) {
+            body { padding: 10px; }
+            .game-container { padding: 20px 15px; }
+            .start-screen h1 { font-size: 1.6rem; }
+            .info-cards { grid-template-columns: 1fr; gap: 8px; }
+            .question-box { font-size: 1rem; }
+            .option-btn { padding: 12px 15px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <!-- START SCREEN -->
+        <div id="start-screen" class="start-screen">
+            <div class="start-logo">🌋</div>
+            <h1>
+                Simulasi TKA OSN IPA SD
+                <span>AI Evaluator</span>
+            </h1>
+            
+            <p style="color: var(--dark-color); line-height: 1.5; margin: 0; max-width: 500px; font-size: 0.95rem;">
+                Uji kemampuan analisis sainsmu di simulasi interaktif ini. Didesain khusus berdasarkan kisi-kisi resmi OSN dengan dukungan feedback suara evaluasi otomatis!
+            </p>
+
+            <div class="info-cards">
+                <div class="info-card">
+                    <span class="value">50</span>
+                    <span class="label">Total Soal</span>
+                </div>
+                <div class="info-card">
+                    <span class="value">60%</span>
+                    <span class="label">Kategori HOTS</span>
+                </div>
+                <div class="info-card">
+                    <span class="value">AI Voice</span>
+                    <span class="label">Feedback Reaksi</span>
+                </div>
+            </div>
+
+            <!-- Setelan Suara -->
+            <div class="voice-setting">
+                <span style="font-weight: bold; color: var(--dark-color);">Pilih Pengisi Suara:</span>
+                <div>
+                    <input type="radio" id="voice-p" name="gender-voice" value="female" checked>
+                    <label for="voice-p">Perempuan 👩‍🏫</label>
+                </div>
+                <div>
+                    <input type="radio" id="voice-l" name="gender-voice" value="male">
+                    <label for="voice-l">Laki-laki 👨‍🏫</label>
+                </div>
+            </div>
+
+            <button class="start-btn" onclick="startGame()">Mulai Ujian 🚀</button>
+        </div>
+
+        <!-- QUIZ SCREEN -->
+        <div id="quiz-screen">
+            <div class="header">
+                <div id="question-number" class="score-board">Soal 1 / 50</div>
+                <div id="score" class="score-board">Skor: 0</div>
+            </div>
+
+            <div class="progress-bar">
+                <div id="progress" class="progress"></div>
+            </div>
+
+            <div id="question" class="question-box">Memuat soal...</div>
+
+            <div id="options" class="options-container"></div>
+
+            <div id="feedback" class="feedback-box"></div>
+            <button id="next-button" class="next-btn" onclick="nextQuestion()">Soal Berikutnya 👉</button>
+            <div style="clear: both;"></div>
+        </div>
+
+        <!-- RESULT SCREEN -->
+        <div id="result-screen" class="result-screen">
+            <h2>Kompetisi Selesai! 🎉</h2>
+            <p>Terima kasih telah berjuang di Simulasi TKA OSN IPA SD.</p>
+            <div class="score-display" id="final-score">0</div>
+            <p id="result-message" style="font-size: 1.1rem; font-weight: bold; margin-bottom: 30px;"></p>
+            <button class="restart-btn" onclick="goToMainMenu()">Kembali ke Menu Utama 🏠</button>
+        </div>
+    </div>
+
+    <script>
+        // DATA 50 SOAL OSN IPA SD (30 HOTS = 60%, 20 MOTS = 40%)
+        const quizData = [
+            {
+                question: "[HOTS] Di sebuah ekosistem padang rumput, populasi belalang mengalami penurunan drastis akibat penggunaan insektisida. Dampak berantai langsung yang paling mungkin terjadi pada jaring-jaring makanan di ekosistem tersebut adalah...",
+                options: [
+                    "Populasi katak menurun, diikuti penurunan populasi ular.",
+                    "Populasi rumput menurun drastis karena kehilangan konsumen.",
+                    "Populasi ular meningkat tajam karena persaingan berkurang.",
+                    "Populasi burung pemakan biji-bijian ikut punah."
+                ],
+                answer: 0,
+                explain: "Konsep Dasar: Jaring makanan. Belalang adalah makanan utama katak. Jika belalang habis, katak kekurangan makanan sehingga populasinya turun. Dampaknya, ular yang memakan katak juga akan kekurangan makanan dan populasinya ikut menurun."
+            },
+            {
+                question: "[HOTS] Sekelompok siswa memasukkan sebuah tanaman air Hydrilla ke dalam bejana berisi air dan menutupnya dengan corong terbalik, lalu menjemurnya di bawah terik matahari. Setelah beberapa jam, muncul gelembung udara di dalam tabung reaksi. Jika ke dalam air ditambahkan baking soda (NaHCO3), jumlah gelembung meningkat pesat karena...",
+                options: [
+                    "Baking soda menaikkan suhu air sehingga tumbuhan memasak lebih cepat.",
+                    "Baking soda larut menjadi CO2 yang merupakan bahan baku utama fotosintesis.",
+                    "Baking soda membunuh bakteri pengurai oksigen di air.",
+                    "Baking soda mengandung oksigen murni yang langsung menguap ke atas."
+                ],
+                answer: 1,
+                explain: "Cara Cepat: Baking soda ($NaHCO_3$) dalam air melepaskan karbon dioksida ($CO_2$). Karena $CO_2$ adalah bahan utama fotosintesis, laju fotosintesis meningkat dan menghasilkan lebih banyak gas Oksigen (gelembung)."
+            },
+            {
+                question: "[MOTS] Mengapa pada malam hari tumbuhan lebih banyak menyerap oksigen dan melepaskan karbon dioksida, berkebalikan dengan proses siang hari?",
+                options: [
+                    "Suhu malam hari terlalu dingin untuk menyimpan oksigen.",
+                    "Proses fotosintesis terhenti karena tidak ada cahaya matahari, namun respirasi sel tetap berjalan.",
+                    "Tumbuhan mengalami pembusukan sel di malam hari.",
+                    "Akar tumbuhan menyerap air lebih banyak pada malam hari."
+                ],
+                answer: 1,
+                explain: "Konsep Dasar: Di malam hari tanpa cahaya, fotosintesis berhenti. Namun, sebagai makhluk hidup, tumbuhan tetap melakukan respirasi (pernapasan) setiap saat untuk menghasilkan energi dengan menghirup $O_2$ dan melepas $CO_2$."
+            },
+            {
+                question: "[HOTS] Andi meletakkan tiga buah logam dengan ukuran sama (Tembaga, Besi, dan Plastik) di bawah terik matahari selama 30 menit. Ketika disentuh, Tembaga terasa paling panas, Besi terasa hangat, sedangkan Plastik tidak terlalu terasa panas. Kesimpulan yang paling tepat mengenai sifat hantaran partikel benda tersebut adalah...",
+                options: [
+                    "Massa jenis plastik lebih besar dari besi.",
+                    "Tembaga memiliki kerapatan partikel yang paling lambat memindahkan kalor.",
+                    "Tembaga merupakan konduktor yang lebih baik daripada besi, sedangkan plastik bersifat isolator.",
+                    "Besi menyerap kalor dari tembaga melalui proses radiasi ruang."
+                ],
+                answer: 2,
+                explain: "Konsep Dasar: Kemampuan menghantarkan panas (konduktivitas). Tembaga > Besi (Konduktor), sedangkan plastik tidak menghantarkan panas dengan baik (Isolator)."
+            },
+            {
+                question: "[HOTS] Ketika astronot berada di bulan, mereka tidak dapat mendengarkan suara ledakan batuan meteoroid yang jatuh di dekat mereka secara langsung. Fenomena ini membuktikan bahwa gelombang bunyi...",
+                options: [
+                    "Memerlukan medium (zat perantara) seperti udara untuk merambat.",
+                    "Merambat terlalu cepat di ruang angkasa sehingga telinga tidak mampu menangkapnya.",
+                    "Dibiaskan sepenuhnya oleh gravitasi bulan yang lemah.",
+                    "Hanya bisa didengar jika suhu udara di sekitarnya di atas 0 derajat."
+                ],
+                answer: 0,
+                explain: "Cara Cepat: Bunyi adalah gelombang mekanik yang mutlak butuh medium (padat/cair/gas) untuk merambat. Di bulan tidak ada atmosfer (ruang hampa udara), sehingga bunyi tidak bisa merambat."
+            },
+            {
+                question: "[MOTS] Jantung manusia memiliki 4 ruangan. Bagian jantung yang bertugas memompa darah bersih (kaya oksigen) ke seluruh tubuh adalah...",
+                options: [
+                    "Serambi Kanan",
+                    "Serambi Kiri",
+                    "Bilik Kanan",
+                    "Bilik Kiri"
+                ],
+                answer: 3,
+                explain: "Cara Cepat: Bilik = memompa keluar jantung. Kiri = darah bersih ($O_2$). Maka Bilik Kiri berfungsi memompa darah bersih ke seluruh tubuh."
+            },
+            {
+                question: "[HOTS] Perhatikan rantai makanan: Padi -> Tikus -> Ular -> Elang. Jika para petani secara massal membasmi tikus dengan racun, dampak jangka panjang yang merugikan bagi petani itu sendiri adalah...",
+                options: [
+                    "Produksi padi meningkat drastis selamanya tanpa ada gangguan hama lain.",
+                    "Ular akan mencari alternatif makanan lain ke pemukiman warga atau memangsa hewan ternak kecil.",
+                    "Populasi elang akan beralih memakan tanaman padi.",
+                    "Tanah pertanian menjadi tidak subur karena kotoran tikus berkurang."
+                ],
+                answer: 1,
+                explain: "HOTS Analisis: Jika tikus musnah, ular kehilangan makanan utamanya di sawah. Akibat kelaparan, ular akan bermigrasi ke area pemukiman warga untuk mencari mangsa."
+            },
+            {
+                question: "[HOTS] Di daerah pegunungan yang dingin, penduduk sering kali membuat teh hangat menggunakan air yang mendidih. Namun, air di pegunungan ternyata mendidih pada suhu di bawah 100°C (sekitar 95°C). Hal ini disebabkan oleh...",
+                options: [
+                    "Kandungan mineral air pegunungan terlalu murni.",
+                    "Tekanan udara di pegunungan lebih rendah daripada di pantai, sehingga air lebih mudah menguap.",
+                    "Suhu lingkungan yang dingin mempercepat proses pemanasan molekul air.",
+                    "Gaya gravitasi di pegunungan menarik molekul air ke bawah."
+                ],
+                answer: 1,
+                explain: "Konsep Dasar: Semakin tinggi suatu tempat, tekanan udaranya semakin rendah. Tekanan udara yang rendah memudahkan molekul air lepas menjadi uap, sehingga titik didihnya menurun."
+            },
+            {
+                question: "[MOTS] Hubungan simbiotik antara kutu daun (aphid) dengan semut karang, di mana semut melindungi kutu daun dari predator dan semut mendapatkan cairan manis (embun madu) dari kutu daun, dinamakan simbiosis...",
+                options: [
+                    "Komensalisme",
+                    "Parasitisme",
+                    "Mutualisme",
+                    "Amensalisme"
+                ],
+                answer: 2,
+                explain: "Konsep Dasar: Keduanya diuntungkan (Semut dapat makanan, kutu daun dapat perlindungan). Maka jenisnya adalah Mutualisme."
+            },
+            {
+                question: "[HOTS] Mengapa kapal laut yang terbuat dari besi yang sangat berat dan besar dapat terapung di atas permukaan air laut, sedangkan sebuah paku besi kecil langsung tenggelam jika dijatuhkan ke air?",
+                options: [
+                    "Kapal laut dilapisi oleh bahan anti air yang menolak molekul laut.",
+                    "Volume kapal yang sangat besar membuat volume air yang dipindahkan juga besar, menghasilkan gaya angkat ke atas yang besar.",
+                    "Paku besi memiliki pori-pori yang menyerap air lebih cepat.",
+                    "Air laut memiliki kadar garam tinggi yang hanya bisa menahan benda berongga besar."
+                ],
+                answer: 1,
+                explain: "Konsep Dasar: Hukum Archimedes. Gaya angkat ke atas sebanding dengan volume zat cair yang dipindahkan. Kapal didesain memiliki rongga volume yang amat besar agar gaya angkatnya mampu menahan berat total kapal."
+            },
+            {
+                question: "[MOTS] Organ pencernaan manusia yang berfungsi menyerap sari-sari makanan hasil proses pencernaan mekanik dan kimiawi adalah...",
+                options: [
+                    "Lambung",
+                    "Usus Halus",
+                    "Usus Besar",
+                    "Kerongkongan"
+                ],
+                answer: 1,
+                explain: "Konsep Dasar: Proses penyerapan sari makanan terjadi di usus halus (terutama ileum), sedangkan usus besar menyerap air dan pembusukan sisa makanan."
+            },
+            {
+                question: "[HOTS] Sebuah es batu dimasukkan ke dalam gelas yang berisi air penuh hingga ke bibir gelas. Ketika seluruh es batu tersebut mencair, apakah air di dalam gelas tersebut akan tumpah?",
+                options: [
+                    "Ya, tumpah banyak karena volume es berubah total menjadi air.",
+                    "Tidak tumpah, karena volume air hasil cairan es tepat sama dengan volume es yang tercelup di bawah permukaan air sebelumnya.",
+                    "Ya, tumpah sedikit karena suhu air meningkat akibat es mencair.",
+                    "Tidak tumpah karena es menyerap sebagian air gelas saat mencair."
+                ],
+                answer: 1,
+                explain: "HOTS Analisis: Saat terapung, es mendesak air seberat dirinya. Ketika mencair, es berubah menjadi air dengan berat dan volume yang pas mengisi ruang kosong yang tadinya ia tempati saat mengapung. Jadi, air tidak tumpah."
+            },
+            {
+                question: "[HOTS] Ketika kita berkaca pada spion motor, bayangan mobil di belakang kita tampak lebih kecil dan area pandangannya terlihat lebih luas. Jenis cermin yang digunakan pada spion tersebut beserta sifat bayangannya adalah...",
+                options: [
+                    "Cermin Cembung; Maya, tegak, diperkecil.",
+                    "Cermin Cekung; Nyata, terbalik, diperkecil.",
+                    "Cermin Datar; Maya, tegak, sama besar.",
+                    "Cermin Cembung; Nyata, tegak, diperbesar."
+                ],
+                answer: 0,
+                explain: "Cara Cepat: Spion selalu menggunakan Cermin Cembung karena sifat bayangannya selalu maya, tegak, dan diperkecil sehingga jangkauan pandangan pengemudi menjadi luas."
+            },
+            {
+                question: "[MOTS] Tanaman kaktus dapat bertahan hidup di lingkungan gurun yang sangat gersang (xerofit). Bentuk adaptasi morfologi yang dilakukan kaktus untuk mengurangi penguapan air adalah...",
+                options: [
+                    "Memiliki akar yang sangat pendek dan tipis.",
+                    "Daunnya termodifikasi menjadi bentuk duri.",
+                    "Batangnya berlubang seperti spons pipa.",
+                    "Menggugurkan daunnya pada musim hujan."
+                ],
+                answer: 1,
+                explain: "Konsep Dasar: Daun berbentuk duri pada kaktus berfungsi meminimalkan luas permukaan daun guna menekan laju penguapan (transpirasi) di gurun yang panas."
+            },
+            {
+                question: "[HOTS] Perhatikan gambar percobaan (bayangkan): Dua buah balon ditiup sama besar lalu diikat di ujung-ujung sebatang kayu yang seimbang. Jika salah satu balon ditusuk hingga kempes, ujung kayu dengan balon yang masih utuh akan bergerak turun ke bawah. Percobaan sederhana ini membuktikan bahwa...",
+                options: [
+                    "Udara menempati ruang bebas.",
+                    "Udara memiliki massa/berat.",
+                    "Udara dapat memuai jika ditekan.",
+                    "Balon karet memiliki gaya pegas yang kuat."
+                ],
+                answer: 1,
+                explain: "HOTS Analisis: Balon yang masih terisi udara menjadi lebih berat daripada balon yang sudah kempes/kosong, menyebabkan timbangan kayu miring ke arah balon berisi udara. Ini membuktikan gas/udara memiliki massa."
+            },
+            {
+                question: "[MOTS] Hewan vertebrata berikut yang bernapas menggunakan insang pada fase berudu (larva) dan menggunakan paru-paru serta kulit lembap saat dewasa adalah...",
+                options: [
+                    "Ikan Gurame",
+                    "Katak (Amfibi)",
+                    "Buaya (Reptil)",
+                    "Lumba-lumba (Mamalia)"
+                ],
+                answer: 1,
+                explain: "Konsep Dasar: Amfibi seperti katak mengalami metamorfosis dari berudu yang hidup di air (insang) menjadi katak dewasa yang hidup di darat/air (paru-paru dan kulit)."
+            },
+            {
+                question: "[HOTS] Mengapa kabel listrik bertegangan tinggi di pinggir jalan sengaja dipasang agak kendur dan tidak tegang pada siang hari?",
+                options: [
+                    "Agar kabel tidak putus saat menyusut di malam hari ketika suhu udara turun.",
+                    "Agar aliran arus listrik mengalir lebih lancar tanpa hambatan.",
+                    "Untuk menghemat biaya pembelian kabel tembaga.",
+                    "Agar burung-burung dapat bertengger dengan aman tanpa tersetrum."
+                ],
+                answer: 0,
+                explain: "Cara Cepat: Di malam hari suhu dingin menyebabkan kabel menyusut (memendek). Jika dipasang tegang pada siang hari, saat menyusut di malam hari kabel akan terlalu kencang dan berisiko putus."
+            },
+            {
+                question: "[HOTS] Pada proses pembuatan garam tradisional, air laut dialirkan ke sebidang tanah datar kemudian dibiarkan menguap di bawah terik matahari hingga menyisakan kristal garam. Perubahan wujud dan metode pemisahan campuran yang terjadi berturut-turut adalah...",
+                options: [
+                    "Mencair dan Filtrasi",
+                    "Menguap dan Kristalisasi (Evaporasi)",
+                    "Menyublim dan Distilasi",
+                    "Membeku dan Kromatografi"
+                ],
+                answer: 1,
+                explain: "Konsep Dasar: Air laut menguap (cair menjadi gas), leaving behind solid dissolved salts that crystallize (garam). Metode ini disebut Evaporasi/Kristalisasi."
+            },
+            {
+                question: "[MOTS] Penyakit pada sistem peredaran darah manusia yang ditandai dengan sel darah putih (leukosit) yang diproduksi secara tidak terkendali dan memakan sel darah merah dinamakan...",
+                options: [
+                    "Anemia",
+                    "Leukemia (Kanker Darah)",
+                    "Hipertensi",
+                    "Hemofilia"
+                ],
+                answer: 1,
+                explain: "Konsep Dasar: Leukemia terjadi ketika sumsum tulang memproduksi leukosit abnormal secara berlebihan sehingga mengganggu fungsi sel darah normal."
+            },
+            {
+                question: "[HOTS] Jika bumi tiba-tiba berhenti berputar pada porosnya (rotasi) namun tetap terus merevolusi matahari, apa fenomena ekstrem yang akan dialami oleh mahluk hidup di bumi?",
+                options: [
+                    "Satu tahun akan berlangsung hanya selama 24 jam saja.",
+                    "Satu wilayah di bumi akan mengalami siang hari terus menerus selama 6 bulan, dan malam hari selama 6 bulan berikutnya.",
+                    "Gravitasi bumi akan menghilang seketika dan semua benda melayang ke angkasa.",
+                    "Matahari akan terbit dari arah barat dan terbenam di timur setiap hari."
+                ],
+                answer: 1,
+                explain: "HOTS Penalaran: Tanpa rotasi, perubahan siang malam tidak terjadi dalam 24 jam, melainkan tergantung posisi bumi menghadap matahari saat revolusi. Akibatnya setengah tahun (6 bulan) bumi menghadap matahari (siang terus), setengah tahun membelakangi (malam terus)."
+            },
+            {
+                question: "[MOTS] Planet dalam tata surya kita yang dikenal sebagai planet terpanas karena atmosfernya yang tebal dilapisi gas rumah kaca (CO2) pembawa panas adalah...",
+                options: [
+                    "Merkurius",
+                    "Venus",
+                    "Mars",
+                    "Yupiter"
+                ],
+                answer: 1,
+                explain: "Konsep Dasar: Meskipun Merkurius paling dekat dengan matahari, Venus adalah planet terpanas akibat efek rumah kaca ekstrem dari atmosfer karbon dioksidanya yang tebal."
+            },
+            {
+                question: "[HOTS] Ibu merebus air dalam panci aluminium. Sentuhan tangan kita pada gagang panci yang ikut terasa panas, perpindahan panas melalui air yang mendidih (bergerak naik turun), dan rasa hangat saat berdiri di dekat kompor secara berurutan merupakan contoh dari...",
+                options: [
+                    "Konduksi, Konveksi, dan Radiasi",
+                    "Konveksi, Radiasi, dan Konduksi",
+                    "Radiasi, Konduksi, dan Konveksi",
+                    "Konduksi, Radiasi, dan Konveksi"
+                ],
+                answer: 0,
+                explain: "Cara Cepat: Gagang panci logam (Konduksi/hantaran zat padat); Air memutar naik turun (Konveksi/aliran zat cair); Hangat di sekitar kompor (Radiasi/pancaran gelombang)."
+            },
+            {
+                question: "[HOTS] Mengapa pada penderita rabun jauh (miopi), bayangan benda yang letaknya jauh jatuh di depan retina mata, dan jenis lensa kacamata apa yang dapat membantunya?",
+                options: [
+                    "Mata terlalu pipih; dibantu lensa silindris.",
+                    "Bola mata terlalu cembung/panjang; dibantu lensa cekung (negatif).",
+                    "Daya akomodasi mata terlalu lemah; dibantu lensa cembung (positif).",
+                    "Kornea mata tidak rata; dibantu kacamata bifokal."
+                ],
+                answer: 1,
+                explain: "Konsep Dasar: Miopi terjadi karena lensa mata terlalu kuat mencembung sehingga bayangan jatuh sebelum (di depan) retina. Dibantu lensa cekung untuk memancarkan cahaya sebelum masuk mata."
+            },
+            {
+                question: "[MOTS] Sendi yang terdapat pada hubungan antara tulang lengan atas dengan tulang belikat, yang memungkinkan terjadinya gerakan ke segala arah disebut...",
+                options: [
+                    "Sendi Engsel",
+                    "Sendi Pelana",
+                    "Sendi Putar",
+                    "Sendi Peluru"
+                ],
+                answer: 3,
+                explain: "Cara Cepat: Ke segala arah = Sendi Peluru (contohnya sendi bahu/lengan atas dengan belikat)."
+            },
+            {
+                question: "[HOTS] Di sebuah laboratorium, terdapat cairan misterius. Saat diuji menggunakan kertas lakmus merah, kertas tetap berwarna merah. Namun saat diuji dengan lakmus biru, kertas berubah menjadi merah. Cairan tersebut kemungkinan besar adalah...",
+                options: [
+                    "Larutan sabun mandi",
+                    "Air kapur sirih",
+                    "Perasan jeruk nipis (Asam)",
+                    "Larutan garam dapur murni"
+                ],
+                answer: 2,
+                explain: "Cara Cepat: Zat yang mengubah lakmus biru menjadi merah berarti bersifat ASAM. Dari pilihan yang ada, perasan jeruk nipis bersifat asam."
+            },
+            {
+                question: "[HOTS] Mengapa pemanfaatan energi alternatif seperti Panel Surya (Solar Cell) dinilai jauh lebih ramah lingkungan dibandingkan penggunaan Pembangkit Listrik Tenaga Uap (PLTU) berbahan bakar batu bara?",
+                options: [
+                    "Panel surya membuang emisi gas karbon dioksida ke tanah bukan ke udara.",
+                    "Panel surya tidak menghasilkan gas buang sisa pembakaran yang memicu pemanasan global.",
+                    "Batu bara merusak lapisan ozon karena memiliki radiasi nuklir tinggi.",
+                    "Panel surya menghasilkan limbah air panas yang menyuburkan ekosistem sungai."
+                ],
+                answer: 1,
+                explain: "Konsep Dasar: Energi surya bersih dari pembakaran kimia. PLTU batubara melepas polutan $SO_2$, $NO_x$, and $CO_2$ dalam jumlah besar yang memperparah efek rumah kaca."
+            },
+            {
+                question: "[MOTS] Komponen darah manusia yang memiliki fungsi utama membekukan darah saat terjadi luka robek pada permukaan kulit adalah...",
+                options: [
+                    "Eritrosit (Sel darah merah)",
+                    "Leukosit (Sel darah putih)",
+                    "Trombosit (Keping darah)",
+                    "Plasma darah"
+                ],
+                answer: 2,
+                explain: "Konsep Dasar: Trombosit akan pfecah mengeluarkan enzim trombokinase untuk membentuk benang-benang fibrin penutup luka."
+            },
+            {
+                question: "[HOTS] Pernyataan yang benar mengenai hubungan antara gaya, masa, dan gerak suatu benda ketika sebuah mobil mogok didorong oleh dua orang dewasa dibandingkan didorong oleh satu orang anak kecil adalah...",
+                options: [
+                    "Anak kecil menghasilkan gaya dorong lebih besar karena konsentrasi tinggi.",
+                    "Dua orang dewasa menghasilkan gaya total yang lebih besar sehingga percepatan gerak mobil lebih tinggi.",
+                    "Massa mobil berkurang jika didorong oleh orang dewasa.",
+                    "Gaya gesek ban mobil hilang total saat didorong oleh dua orang."
+                ],
+                answer: 1,
+                explain: "Konsep Dasar: Hukum II Newton. Percepatan berbanding lurus dengan gaya total. Semakin besar gaya dorong (2 orang dewasa), benda bermassa sama akan bergerak lebih cepat/mudah."
+            },
+            {
+                question: "[MOTS] Peristiwa jatuhnya serbuk sari dari benang sari ke kepala putik pada bunga yang sama disebut penyerbukan...",
+                options: [
+                    "Sendiri (Autogami)",
+                    "Tetangga (Geitonogami)",
+                    "Silang (Allogami)",
+                    "Bastar"
+                ],
+                answer: 0,
+                explain: "Konsep Dasar: Penyerbukan sendiri terjadi jika serbuk sari jatuh ke kepala putik di bunga yang sama pada satu tanaman."
+            },
+            {
+                question: "[HOTS] Di ekosistem hutan, jamur dan bakteri memegang peran yang sangat vital sebagai dekomposer (pengurai). Jika seluruh organisme pengurai ini musnah, hal fatal yang akan langsung mengganggu kelangsungan hidup tumbuhan adalah...",
+                options: [
+                    "Hewan karnivora akan memakan tumbuhan langsung.",
+                    "Siklus nutrisi tanah terhenti karena bangkai mahluk hidup tidak terurai, sehingga tanah kehabisan unsur hara.",
+                    "Intensitas cahaya matahari ke hutan akan menurun drastis.",
+                    "Tumbuhan tidak bisa melakukan penyerbukan silang lagi."
+                ],
+                answer: 1,
+                explain: "HOTS Analisis: Tanpa pengurai, zat organik sisa makhluk hidup mati tidak hancur menjadi zat anorganik (hara). Akibatnya, tanah menjadi gersang karena tidak ada pasokan nutrisi baru untuk diserap akar tanaman."
+            },
+            {
+                question: "[HOTS] Jika sebuah magnet batang dipotong secara melintang menjadi tiga bagian yang sama besar, maka sifat magnetik yang akan terbentuk pada potongan-potongan tersebut adalah...",
+                options: [
+                    "Bagian tengah kehilangan sifat magnet sama sekali.",
+                    "Ketiga potongan masing-masing akan membentuk pasangan kutub utara dan selatan yang baru.",
+                    "Potongan ujung kiri hanya memiliki kutub utara, potongan ujung kanan hanya memiliki kutub selatan.",
+                    "Daya kemagnetannya bertambah tiga kali lipat karena jumlah kutub bertambah."
+                ],
+                answer: 1,
+                explain: "Konsep Dasar: Kutub magnet selalu berpasangan (dipol). Memotong magnet tidak pernah menghasilkan kutub tunggal (monopol). Setiap bagian yang terpotong secara otomatis menata ulang partikel elementernya menjadi sepasang kutub utara-selatan baru."
+            },
+            {
+                question: "[MOTS] Di dalam lambung manusia terjadi proses pencernaan mekanik dan kimiawi. Fungsi utama dari cairan Asam Klorida (HCl) yang diproduksi oleh dinding lambung adalah...",
+                options: [
+                    "Mengemulsikan lemak menjadi gliserol.",
+                    "Membunuh bakteri patogen pada makanan serta mengaktifkan pepsinogen menjadi pepsin.",
+                    "Mengubah amilum menjadi maltosa.",
+                    "Menyerap sari-sari makanan sisa usus."
+                ],
+                answer: 1,
+                explain: "Konsep Dasar: Asam klorida ($HCl$) bertugas menciptakan suasana sangat asam (pH 1.5-2) di dalam lambung yang berguna untuk membasmi kuman pembawa penyakit dan mengaktifkan pepsin."
+            },
+            {
+                question: "[HOTS] Para astronot di Stasiun Luar Angkasa Internasional (ISS) tampak melayang-layang bebas di udara. Padahal, ISS berada di ketinggian sekitar 400 km di atas bumi, di mana gaya gravitasi bumi sebenarnya masih sangat kuat (sekitar 90% dari permukaan bumi). Mengapa para astronot tersebut melayang?",
+                options: [
+                    "Pakaian astronot dirancang untuk menetralkan medan gravitasi bumi.",
+                    "Astronot melayang karena ISS bergerak dalam orbit konstan yang menjadikannya terus-menerus jatuh bebas mengelilingi bumi.",
+                    "Atmosfer tipis di ISS bertindak sebagai bantalan udara antimagnetik.",
+                    "Gaya gravitasi bulan menarik astronot ke arah yang berlawanan dengan bumi."
+                ],
+                answer: 1,
+                explain: "HOTS Analisis: Kondisi melayang (weightlessness) terjadi bukan karena tidak ada gravitasi, tetapi karena ISS beserta isinya terus-menerus 'jatuh bebas' mengitari bumi pada kecepatan orbital yang sangat tinggi ($\approx 27.600$ km/jam). Gaya sentrifugal mengimbangi gaya gravitasi."
+            },
+            {
+                question: "[MOTS] Atmosfer bumi terdiri dari beberapa lapisan. Lapisan atmosfer di mana partikel-partikel gasnya mengalami ionisasi sehingga mampu memantulkan gelombang radio nirkabel jarak jauh adalah...",
+                options: [
+                    "Troposfer",
+                    "Stratosfer",
+                    "Termosfer (Ionosfer)",
+                    "Mesosfer"
+                ],
+                answer: 2,
+                explain: "Konsep Dasar: Lapisan Termosfer memiliki lapisan sub-bernama Ionosfer di mana radiasi matahari mengionisasi partikel gas. Lapisan ini memantulkan kembali gelombang radio frekuensi tinggi ke bumi."
+            },
+            {
+                question: "[HOTS] Sekelompok siswa menaruh sebatang tanaman pacar air utuh ke dalam botol kaca berisi air berwarna merah. Setelah didiamkan beberapa jam, tampak tulang daun dan sebagian batang berubah warna menjadi merah. Ketika batang diiris tipis secara melintang dan diamati dengan mikroskop, jaringan yang berwarna merah melingkar di bagian dalam batang tersebut adalah...",
+                options: [
+                    "Floem, karena floem mengedarkan makanan hasil fotosintesis ke bawah.",
+                    "Epidermis, karena terletak di bagian terluar batang tumbuhan.",
+                    "Xilem, karena xilem bertugas mengangkut air dan mineral dari akar menuju daun.",
+                    "Kambium, karena pembelahan sel membutuhkan pewarna agar tumbuh."
+                ],
+                answer: 2,
+                explain: "Konsep Dasar: Xilem adalah pembuluh kayu yang berfungsi mengangkut air dan zat hara dari dalam tanah ke atas menuju organ daun. Air pewarna merah diserap akar dan diangkut lewat pembuluh xilem sehingga dinding sel xilem menyerap warna merah tersebut."
+            },
+            {
+                question: "[MOTS] Perhatikan rantai makanan berikut: Rumput -> Belalang -> Burung Pipit -> Burung Elang -> Pengurai. Berdasarkan jaring-jaring makanan tersebut, organisme yang menduduki posisi sebagai Konsumen Tingkat II (Sekunder) adalah...",
+                options: [
+                    "Belalang",
+                    "Burung Pipit",
+                    "Burung Elang",
+                    "Pengurai"
+                ],
+                answer: 1,
+                explain: "Konsep Dasar: Rumput (Produsen), Belalang (Konsumen Tingkat I / Herbivora), Burung Pipit (Konsumen Tingkat II / Karnivora Kecil), Burung Elang (Konsumen Tingkat III / Karnivora Puncak)."
+            },
+            {
+                question: "[HOTS] Sebuah termos air panas dirancang menggunakan botol kaca berlapis ganda, di mana ruang di antara kedua lapisan kaca tersebut dikosongkan (dibuat hampa udara/vakum). Mengapa lapisan hampa udara ini sangat efektif mempertahankan suhu air panas di dalamnya?",
+                options: [
+                    "Menghalangi perambatan kalor secara konduksi dan konveksi karena tidak ada partikel zat perantara.",
+                    "Menyerap energi radiasi lingkungan sekitar dengan sangat cepat.",
+                    "Membuat botol kaca menjadi anti pecah dari tekanan suhu air tinggi.",
+                    "Mencegah penguapan molekul oksigen yang mengoksidasi air panas."
+                ],
+                answer: 0,
+                explain: "Konsep Dasar: Konduksi (hantaran lewat zat padat) dan konveksi (aliran zat cair/gas) membutuhkan partikel medium untuk merambat. Lapisan vakum (kosong dari materi) memutus jalur rambat tersebut sehingga panas air terjebak di dalam botol termos."
+            },
+            {
+                question: "[HOTS] Susi meletakkan sebuah wadah berisi air di atas neraca pegas presisi tinggi. Susi kemudian memasukkan jari telunjuknya ke dalam air tersebut hingga tercelup sebagian tanpa menyentuh bagian dasar maupun dinding wadah. Apa yang akan terjadi pada jarum penunjuk berat pada neraca pegas?",
+                options: [
+                    "Jarum tetap diam karena jari Susi tidak menempel pada permukaan fisik wadah/timbangan.",
+                    "Jarum bergerak naik (menunjukkan nilai berat yang bertambah) karena air memberikan gaya ke atas pada jari, dan jari memberikan gaya reaksi ke bawah pada air.",
+                    "Jarum bergerak turun (menunjukkan nilai berat berkurang) akibat tarikan gravitasi jari.",
+                    "Jarum bergerak fluktuatif tidak beraturan akibat hilangnya kerapatan massa air."
+                ],
+                answer: 1,
+                explain: "HOTS Analisis: Menurut Hukum III Newton (Aksi-Reaksi) dan Hukum Archimedes, ketika air memberikan gaya apung ke atas (gaya apung) pada jari Susi, jari Susi juga memberikan gaya dorong ke bawah yang sama besar pada air. Gaya dorong ke bawah ini diteruskan ke dasar wadah sehingga neraca membaca adanya penambahan beban."
+            },
+            {
+                question: "[HOTS] Dua buah lilin identik dinyalakan bersamaan. Lilin A diletakkan di ruang terbuka, sedangkan Lilin B diletakkan di dalam stoples kaca bening yang tertutup sangat rapat. Beberapa menit kemudian Lilin B padam, sedangkan Lilin A tetap menyala. Peristiwa padamnya Lilin B disebabkan oleh...",
+                options: [
+                    "Kelembapan udara di dalam stoples naik secara drastis mendinginkan sumbu.",
+                    "Konsentrasi gas Oksigen di dalam stoples habis terbakar dan digantikan oleh penumpukan gas Karbon Dioksida.",
+                    "Lilin B menghasilkan panas radiasi balik yang merusak dirinya sendiri.",
+                    "Cahaya lilin terhalang oleh dinding stoples yang memantulkan energi pembakaran."
+                ],
+                answer: 1,
+                explain: "HOTS Analisis: Pembakaran membutuhkan oksigen ($O_2$). Di dalam stoples tertutup, jumlah oksigen terbatas. Proses pembakaran mengubah oksigen menjadi karbon dioksida ($CO_2$). Ketika tingkat oksigen drop di bawah batas minimal, reaksi pembakaran lilin tidak dapat berlanjut dan padam."
+            },
+            {
+                question: "[MOTS] Alat reproduksi generatif pada tumbuhan berbunga yang bertugas menghasilkan sel kelamin jantan (spermatozoid) adalah...",
+                options: [
+                    "Kepala Putik (Pistillum)",
+                    "Benang Sari (Stamen)",
+                    "Mahkota Bunga (Corolla)",
+                    "Kelopak Bunga (Calyx)"
+                ],
+                answer: 1,
+                explain: "Konsep Dasar: Benang sari adalah alat kelamin jantan pada tumbuhan yang menghasilkan serbuk sari (serbuk reproduktif), sedangkan putik adalah alat kelamin betina."
+            },
+            {
+                question: "[HOTS] Mengapa hewan di kutub seperti beruang kutub memiliki lapisan lemak bawah kulit yang sangat tebal serta daun telinga yang berukuran jauh lebih kecil jika dibandingkan dengan beruang tropis (seperti beruang madu)?",
+                options: [
+                    "Lemak tebal membantu beruang bergerak licin di atas es, sedangkan telinga kecil mencegah kemasukan serpihan salju.",
+                    "Lapisan lemak berfungsi sebagai isolator termal tubuh, dan ukuran telinga yang kecil meminimalkan pembuangan panas tubuh secara radiasi ke lingkungan.",
+                    "Telinga yang kecil memfokuskan getaran bunyi di daerah bersalju tebal.",
+                    "Lemak tebal meringankan massa jenis tubuh beruang saat berenang di air laut kutub."
+                ],
+                answer: 1,
+                explain: "Konsep Dasar (Hukum Allen): Di daerah dingin, tubuh mamalia beradaptasi dengan memperkecil luas permukaan bagian tubuh luar yang menonjol (telinga, moncong) untuk mencegah hilangnya panas internal tubuh. Lemak tebal berperan menahan panas di dalam tubuh."
+            },
+            {
+                question: "[MOTS] Ketika seseorang menyetrika pakaian menggunakan setrika listrik, perubahan bentuk energi utama yang terjadi berturut-turut pada alat tersebut adalah...",
+                options: [
+                    "Energi Listrik menjadi Energi Kimia",
+                    "Energi Listrik menjadi Energi Panas (Kalor)",
+                    "Energi Gerak menjadi Energi Listrik",
+                    "Energi Panas menjadi Energi Gerak"
+                ],
+                answer: 1,
+                explain: "Konsep Dasar: Arus listrik yang mengalir melalui elemen pemanas dengan hambatan tinggi di dalam setrika mengalami perubahan energi langsung dari energi listrik menjadi energi panas (efek Joule)."
+            },
+            {
+                question: "[HOTS] Budi membawa sebuah timbangan badan digital ke dalam lift gedung bertingkat. Ia berdiri diam di atas timbangan tersebut. Ketika lift mulai bergerak dipercepat ke atas, angka pada timbangan digital menunjukkan peningkatan yang signifikan dari berat badan aslinya. Fenomena ini terjadi karena...",
+                options: [
+                    "Massa tubuh Budi bertambah padat seiring naiknya ketinggian lift.",
+                    "Timbangan mengalami gaya tekan tambahan ke bawah akibat gaya semu inersia yang mendorong tubuh Budi ke bawah saat lift dipercepat ke atas.",
+                    "Gaya gravitasi bumi di lantai atas lebih kuat daripada lantai dasar gedung.",
+                    "Tekanan udara di dalam lift meningkat tajam menekan sensor timbangan."
+                ],
+                answer: 1,
+                explain: "HOTS Analisis: Sesuai Hukum Newton II, ketika lift dipercepat ke atas ($a > 0$), timbangan harus mendorong tubuh Budi ke atas dengan gaya normal ($N = m(g + a)$). Gaya dorong timbangan pada Budi setara dengan gaya tekan tubuh Budi ke timbangan, sehingga timbangan membaca berat semu yang lebih besar."
+            },
+            {
+                question: "[MOTS] Penyakit atau gangguan pada sistem pernapasan manusia berupa penyempitan saluran pernapasan (bronkiolus) yang dipicu oleh faktor alergen (debu, bulu hewan) atau suhu lingkungan yang dingin dinamakan...",
+                options: [
+                    "Tuberkulosis (TBC)",
+                    "Bronkitis Akut",
+                    "Asma",
+                    "Emfisema"
+                ],
+                answer: 2,
+                explain: "Konsep Dasar: Asma ditandai dengan hipersensitivitas bronkiolus terhadap rangsangan tertentu yang mengakibatkan otot polos saluran pernapasan berkontraksi (menyempit) sehingga penderita sesak napas."
+            },
+            {
+                question: "[HOTS] Di sebuah pulau terpencil, air bersih sangat sulit ditemukan, namun air laut sangat berlimpah. Jika Anda ingin memurnikan air laut menjadi air tawar yang layak minum menggunakan alat penampung sederhana, prinsip kerja pemisahan campuran yang paling efektif dan tepat digunakan adalah...",
+                options: [
+                    "Filtrasi bertingkat menggunakan pasir dan batu kerikil.",
+                    "Evaporasi (penguapan air menggunakan sinar matahari) diikuti dengan kondensasi (pengembunan uap air tawar).",
+                    "Kromatografi kertas hisap garam laut.",
+                    "Kristalisasi cepat dengan penambahan es batu kimia."
+                ],
+                answer: 1,
+                explain: "HOTS Analisis: Air tawar dapat dipisahkan dari zat terlarutnya (garam mineral) dengan penguapan. Molekul air murni menguap pada suhu hangat matahari, sedangkan garam tetap mengendap. Uap air murni yang mengenai permukaan penutup plastik/kaca akan mengembun menjadi tetesan air tawar bersih."
+            },
+            {
+                question: "[MOTS] Zat gizi makanan yang dikonsumsi manusia memiliki peran tersendiri. Zat makanan yang berfungsi sebagai zat pembangun utama, memperbaiki jaringan sel tubuh yang rusak, serta pertumbuhan sel baru adalah...",
+                options: [
+                    "Karbohidrat",
+                    "Lemak Jenuh",
+                    "Protein",
+                    "Vitamin B Kompleks"
+                ],
+                answer: 2,
+                explain: "Konsep Dasar: Protein adalah polimer asam amino yang berfungsi sebagai pembangun struktural tubuh (otot, kulit, organ) serta membentuk enzim dan hormon penting."
+            },
+            {
+                question: "[HOTS] Pelangi merupakan fenomena optik yang sangat indah di langit setelah hujan. Mengapa pelangi selalu tampak melengkung berbentuk busur lingkaran dan hanya bisa terlihat jika posisi matahari berada tepat di belakang tubuh pengamat?",
+                options: [
+                    "Cahaya matahari dipantulkan oleh lengkungan atmosfer bumi terluar.",
+                    "Tetesan air hujan berbentuk bulat bertindak sebagai prisma mikro yang mendispersikan dan memantulkan cahaya matahari secara internal pada sudut konstan sekitar 42 derajat terhadap mata.",
+                    "Gaya gravitasi menarik ujung-ujung spektrum warna jatuh ke bumi.",
+                    "Awan mendung menyerap warna gelap sehingga menyisakan warna lengkung cerah."
+                ],
+                answer: 1,
+                explain: "HOTS Analisis: Setiap tetesan air hujan bertindak seperti cermin pemantul internal sekaligus pembias cahaya. Sudut deviasi maksimum untuk cahaya merah-ungu yang keluar dari tetesan air bulat ini berada di sekitar sudut $40^{\circ} - 42^{\circ}$ dari arah bayangan kepala pengamat, membentuk busur kerucut lingkaran sempurna."
+            },
+            {
+                question: "[MOTS] Bagian mata manusia yang bertindak sebagai celah lingkaran dinamis untuk mengatur intensitas atau jumlah cahaya yang masuk ke dalam bola mata adalah...",
+                options: [
+                    "Retina (Selaput Jala)",
+                    "Kornea (Selaput Bening)",
+                    "Pupil (Anak Mata)",
+                    "Lensa Mata"
+                ],
+                answer: 2,
+                explain: "Konsep Dasar: Pupil akan mengecil (miosis) saat cahaya terang untuk melindungi retina dari kelebihan cahaya, dan melebar (midriasis) saat redup/gelap agar cahaya maksimal dapat masuk."
+            },
+            {
+                question: "[HOTS] Dua wadah terbuka dengan volume air yang sama (200 ml) diletakkan di bawah terik matahari. Wadah A berbentuk mangkuk yang lebar dan datar, sedangkan Wadah B berbentuk botol yang sempit dan tinggi. Setelah didiamkan selama 3 jam, volume air pada Wadah A tersisa 120 ml, sedangkan Wadah B tersisa 185 ml. Perbedaan volume air yang hilang ini membuktikan bahwa...",
+                options: [
+                    "Laju penguapan zat cair dipengaruhi oleh luas permukaan bidang penguapan.",
+                    "Suhu panas matahari di sekitar Wadah B lebih rendah karena botol memantulkan kalor.",
+                    "Wadah plastik menahan penguapan air lebih baik dibanding wadah keramik.",
+                    "Massa jenis air di dalam mangkuk lebih ringan daripada air di dalam botol."
+                ],
+                answer: 0,
+                explain: "HOTS Analisis: Penguapan terjadi pada molekul zat cair yang berada di permukaan bebas. Semakin luas permukaan wadah yang bersentuhan dengan udara luar (Wadah A), semakin banyak molekul air yang mendapat kesempatan lepas menjadi gas secara bersamaan."
+            },
+            {
+                question: "[MOTS] Naik turunnya permukaan air laut (pasang surut) di bumi secara periodik paling dominan dipengaruhi oleh kekuatan gaya tarik gravitasi dari benda angkasa terdekat, yaitu...",
+                options: [
+                    "Planet Yupiter",
+                    "Matahari",
+                    "Bulan",
+                    "Komet Halley"
+                ],
+                answer: 2,
+                explain: "Konsep Dasar: Meskipun Bulan memiliki massa jauh lebih kecil dari Matahari, jaraknya yang sangat dekat dengan Bumi membuat gaya pasang surut (tidal force) yang dihasilkan gravitasi Bulan sekitar 2.2 kali lebih kuat daripada gaya pasang surut Matahari."
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answered = false;
+
+        // Daftar reaksi suara (Menggunakan Web Speech API)
+        const femaleCorrectResponses = [
+            "Luar biasa! Jawabanmu sangat tepat sekali.",
+            "Hebat! Kamu paham betul konsep sains ini.",
+            "Bagus sekali! Pertahankan performamu ya.",
+            "Betul! Analisis yang sangat cerdas."
+        ];
+
+        const femaleWrongResponses = [
+            "Aduh, sayang sekali jawabannya masih kurang tepat. Tetap semangat!",
+            "Kurang tepat sedikit nih. Yuk pelajari pembahasannya ya.",
+            "Masih keliru, jangan berkecil hati. Kamu pasti bisa di soal berikutnya!",
+            "Jawaban belum pas. Baca penjelasannya baik-baik ya."
+        ];
+
+        const maleCorrectResponses = [
+            "Mantap! Jawabanmu benar sekali.",
+            "Keren! Analisis fisikamu mantap betul.",
+            "Hebat, jawaban yang sangat akurat!",
+            "Tepat sekali! Kamu murid yang cerdas."
+        ];
+
+        const maleWrongResponses = [
+            "Wah, sayang sekali jawabannya salah. Tidak apa-apa, mari belajar lagi.",
+            "Masih keliru nih. Coba perhatikan lagi pembahasannya ya.",
+            "Waduh belum tepat. Ayo lebih fokus di soal berikutnya!",
+            "Kurang pas kawan. Baca penjelasannya dulu ya."
+        ];
+
+        // Fungsi Suara Reaksi AI Evaluator
+        function speakReaction(isCorrect) {
+            if ('speechSynthesis' in window) {
+                // Hentikan suara yang sedang berjalan jika ada
+                window.speechSynthesis.cancel();
+
+                const isFemale = document.getElementById("voice-p").checked;
+                let text = "";
+
+                if (isCorrect) {
+                    const list = isFemale ? femaleCorrectResponses : maleCorrectResponses;
+                    text = list[Math.floor(Math.random() * list.length)];
+                } else {
+                    const list = isFemale ? femaleWrongResponses : maleWrongResponses;
+                    text = list[Math.floor(Math.random() * list.length)];
+                }
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'id-ID'; // Menggunakan suara Bahasa Indonesia
+
+                // Mencoba mencari voice Bahasa Indonesia yang sesuai jenis kelamin jika tersedia di browser
+                const voices = window.speechSynthesis.getVoices();
+                const idVoice = voices.find(voice => voice.lang.includes('id'));
+                if (idVoice) {
+                    utterance.voice = idVoice;
+                }
+
+                // Pengaturan pitch/rate sederhana untuk membedakan karakter suara
+                if (isFemale) {
+                    utterance.pitch = 1.2;
+                    utterance.rate = 1.0;
+                } else {
+                    utterance.pitch = 0.85;
+                    utterance.rate = 0.95;
+                }
+
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Fungsi Memulai Game dari Start Screen
+        function startGame() {
+            document.getElementById("start-screen").style.display = "none";
+            document.getElementById("quiz-screen").style.display = "block";
+            document.getElementById("result-screen").style.display = "none";
+            
+            currentQuestionIndex = 0;
+            score = 0;
+            
+            loadQuestion();
+        }
+
+        // Inisialisasi Game
+        function loadQuestion() {
+            answered = false;
+            document.getElementById("next-button").style.display = "none";
+            document.getElementById("feedback").style.display = "none";
+            
+            let currentQuestion = quizData[currentQuestionIndex];
+            
+            // Update Progress & Header
+            document.getElementById("question-number").innerText = `Soal ${currentQuestionIndex + 1} / ${quizData.length}`;
+            document.getElementById("score").innerText = `Skor: ${score}`;
+            let progressPercent = ((currentQuestionIndex) / quizData.length) * 100;
+            document.getElementById("progress").style.width = `${progressPercent}%`;
+
+            // Tampilkan Teks Soal
+            document.getElementById("question").innerText = currentQuestion.question;
+
+            // Tampilkan Pilihan Jawaban
+            const optionsContainer = document.getElementById("options");
+            optionsContainer.innerHTML = "";
+            
+            currentQuestion.options.forEach((option, index) => {
+                const button = document.createElement("button");
+                button.className = "option-btn";
+                button.innerText = `${String.fromCharCode(65 + index)}. ${option}`;
+                button.onclick = () => selectOption(index, button);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function selectOption(selectedIndex, selectedButton) {
+            if (answered) return;
+            answered = true;
+
+            const currentQuestion = quizData[currentQuestionIndex];
+            const optionButtons = document.querySelectorAll(".option-btn");
+            const feedbackBox = document.getElementById("feedback");
+
+            if (selectedIndex === currentQuestion.answer) {
+                // Jika Benar
+                selectedButton.classList.add("correct");
+                score += 10; // Setiap jawaban benar mendapat 10 poin
+                document.getElementById("score").innerText = `Skor: ${score}`;
+                
+                feedbackBox.className = "feedback-box feedback-success";
+                feedbackBox.innerHTML = `<b>Jawabanmu BENAR! 🎉</b><br><br>${currentQuestion.explain}`;
+                speakReaction(true);
+            } else {
+                // Jika Salah
+                selectedButton.classList.add("wrong");
+                optionButtons[currentQuestion.answer].classList.add("correct");
+                
+                feedbackBox.className = "feedback-box feedback-fail";
+                feedbackBox.innerHTML = `<b>Jawabanmu KURANG TEPAT ❌</b><br>Jawaban Benar: <b>${String.fromCharCode(65 + currentQuestion.answer)}</b><br><br><b>Pembahasan:</b> ${currentQuestion.explain}`;
+                speakReaction(false);
+            }
+
+            feedbackBox.style.display = "block";
+            document.getElementById("next-button").style.display = "block";
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            document.getElementById("quiz-screen").style.display = "none";
+            const resultScreen = document.getElementById("result-screen");
+            resultScreen.style.display = "block";
+
+            // Update Progress Bar ke 100% saat selesai
+            document.getElementById("progress").style.width = `100%`;
+
+            const finalScore = score;
+            document.getElementById("final-score").innerText = finalScore;
+
+            const resultMessage = document.getElementById("result-message");
+            if (finalScore >= 420) {
+                resultMessage.innerHTML = "Luar Biasa! Kamu berpotensi meraih <span style='color: #FFD700;'>Medali Emas</span> Tingkat Nasional! 🏆🏅";
+                resultMessage.style.color = "#2ECC71";
+            } else if (finalScore >= 300) {
+                resultMessage.innerHTML = "Hebat! Kamu berpeluang mendapatkan <span style='color: #C0C0C0;'>Medali Perak / Perunggu</span>! Tingkatkan terus belajarmu! 🥈🥉";
+                resultMessage.style.color = "#3498DB";
+            } else {
+                resultMessage.innerHTML = "Usaha yang bagus! Mari belajar lebih giat lagi untuk menguasai materi OSN IPA SD. Semangat belajar! 💪📖";
+                resultMessage.style.color = "#E74C3C";
+            }
+        }
+
+        // Fungsi untuk Kembali ke Menu Utama
+        function goToMainMenu() {
+            document.getElementById("result-screen").style.display = "none";
+            document.getElementById("start-screen").style.display = "flex";
+            document.getElementById("quiz-screen").style.display = "none";
+        }
+    </script>
+</body>
+</html>
